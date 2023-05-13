@@ -21,7 +21,8 @@ class InfiniteHashTable(Generic[K, V]):
     TABLE_SIZE = 27
 
     def __init__(self) -> None:
-        raise NotImplementedError()
+        self.table = [None] * self.TABLE_SIZE
+
 
     def hash(self, key: K) -> int:
         if self.level < len(key):
@@ -34,13 +35,25 @@ class InfiniteHashTable(Generic[K, V]):
 
         :raises KeyError: when the key doesn't exist.
         """
-        raise NotImplementedError()
+        location = self.get_location(key)
+        current_table = self.table
+        for index in location:
+            current_table = current_table[index]
+            if current_table is None:
+                raise KeyError(key)
+        return current_table
 
     def __setitem__(self, key: K, value: V) -> None:
         """
         Set an (key, value) pair in our hash table.
         """
-        raise NotImplementedError()
+        location = self.get_location(key)
+        current_table = self.table
+        for index in location[:-1]:
+            if current_table[index] is None:
+                current_table[index] = [None] * self.TABLE_SIZE
+            current_table = current_table[index]
+        current_table[location[-1]] = value
 
     def __delitem__(self, key: K) -> None:
         """
@@ -48,10 +61,33 @@ class InfiniteHashTable(Generic[K, V]):
 
         :raises KeyError: when the key doesn't exist.
         """
-        raise NotImplementedError()
+        location = self.get_location(key)
+        path = []
+        current_table = self.table
+        for index in location[:-1]:
+            path.append((current_table, index))
+            current_table = current_table[index]
+            if current_table is None:
+                raise KeyError(key)
+        del current_table[location[-1]]
+        while len(current_table) == 1:
+            parent_table, parent_index = path.pop()
+            del parent_table[parent_index]
+            current_table = parent_table
 
     def __len__(self):
-        raise NotImplementedError()
+        count = 0
+        stack = [self.table]
+        while stack:
+            current_table = stack.pop()
+            for entry in current_table:
+                if entry is None:
+                    continue
+                if isinstance(entry, list):
+                    stack.append(entry)
+                else:
+                    count += 1
+        return count
 
     def __str__(self) -> str:
         """
@@ -67,7 +103,15 @@ class InfiniteHashTable(Generic[K, V]):
 
         :raises KeyError: when the key doesn't exist.
         """
-        raise NotImplementedError()
+        location = []
+        current_table = self.table
+        for level in range(len(key) + 1):
+            index = self.hash(key, level)
+            location.append(index)
+            if current_table[index] is None:
+                raise KeyError("Key does not exist")
+            current_table = current_table[index]
+        return location
 
     def __contains__(self, key: K) -> bool:
         """
