@@ -88,7 +88,7 @@ class Trail:
         return Trail(TrailSplit(path_top=Trail(None), path_bottom=Trail(None), path_follow=self))
 
     def follow_path(self, personality):
-        stack =LinkedStack()
+        stack = LinkedStack()
         current = self
 
         while current:
@@ -96,10 +96,16 @@ class Trail:
                 personality.add_mountain(current.store.mountain)
                 current = current.store.following
             elif isinstance(current.store, TrailSplit):
+                stack.push(current.store.path_follow)
                 if personality.select_branch(current.store.path_top, current.store.path_bottom):
                     current = current.store.path_top
                 else:
                     current = current.store.path_bottom
+            if current.store is None:
+                if stack.is_empty():
+                    break
+                else:
+                    current = stack.pop()
 
     def collect_all_mountains(self) -> list[Mountain]:
         """Returns a list of all mountains on the trail."""
